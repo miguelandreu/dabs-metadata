@@ -1,0 +1,12 @@
+[
+    {
+        "pipeline_group": "tenerife_meteo_data",
+        "cluster": "serverless",
+        "tags": [
+            {
+                "domain": "meteo",
+                "region": "tenerife"
+            }
+        ]
+    }
+]

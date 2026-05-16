@@ -1,0 +1,1 @@
+{"pipeline_group": "test_pydabs", "cluster": "serverless", "tags": [{"domain": "meteo", "region": "tenerife"}]}
