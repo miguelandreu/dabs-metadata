@@ -32,19 +32,17 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://dbc-dc8e4af3-bd6a.cloud.databricks.com
+      host: https://your-host.cloud.databricks.com
     variables:
       catalog: workspace
       schema: dev
   prod:
     mode: production
     workspace:
-      host: https://dbc-dc8e4af3-bd6a.cloud.databricks.com
-      # We explicitly deploy to /Workspace/Users/m.andreunieva@gmail.com to make sure we only have a single copy.
-      root_path: /Workspace/Users/m.andreunieva@gmail.com/.bundle/${bundle.name}/${bundle.target}
+      host: https://your-host.cloud.databricks.com
     variables:
       catalog: workspace
       schema: prod
     permissions:
-      - user_name: m.andreunieva@gmail.com
+      - user_name: ${workspace.current_user.userName}
         level: CAN_MANAGE

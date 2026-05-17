@@ -1,0 +1,89 @@
+# This is a Databricks asset bundle definition for infrastructure_deployment.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: infrastructure_deployment
+  uuid: 6822aa93-ea08-463b-86e1-7cc3035dc780
+  engine: direct
+
+variables:
+  catalog:
+    description: The catalog to use
+  schema:
+    description: The schema to use
+  region:
+    default: eu
+    description: 'region for deployment'
+
+resources:
+
+  catalogs:
+    meteo_open_data:
+      name: meteo_open_data
+      comment: 'Demo base Catalog for both Data Storage and Metadata'
+      grants:
+        - principal: ${workspace.current_user.userName}
+          privileges:
+            - MANAGE
+      
+  
+  schemas:
+  # Schemas oriented to medallion architecture
+    landing:
+      name: landing
+      catalog_name: ${resources.catalogs.meteo_open_data.name}
+      comment: 'bronze layer catalog'
+    bronze:
+      name: bronze
+      catalog_name: ${resources.catalogs.meteo_open_data.name}
+      comment: 'bronze layer catalog'
+    silver:
+      name: silver
+      catalog_name: ${resources.catalogs.meteo_open_data.name}
+      comment: 'silver layer catalog'
+    gold:
+      name: gold
+      catalog_name: ${resources.catalogs.meteo_open_data.name}
+      comment: 'gold layer catalog'
+    # Schemas oriented to metadata
+    # Ideally, this schema should be in a different catalog.
+    # For the sake of simplicity in this demo. Both are together
+    operations:
+      name: operations
+      catalog_name: ${resources.catalogs.meteo_open_data.name}
+      comment: 'gold layer catalog'
+  
+  volumes:
+    raw_api_landing:
+      catalog_name: ${resources.catalogs.meteo_open_data.name}
+      schema_name: ${resources.schemas.landing.name}
+      name: raw_api_landing
+    metadata_storage:
+      catalog_name: ${resources.catalogs.meteo_open_data.name}
+      schema_name: ${resources.schemas.operations.name}
+      name: metadata_storage
+
+
+
+targets:
+  dev:
+    # The default target uses 'mode: development' to create a development copy.
+    # - Deployed resources get prefixed with '[dev my_user_name]'
+    # - Any job schedules and triggers are paused by default.
+    # See also https://docs.databricks.com/dev-tools/bundles/deployment-modes.html.
+    mode: development
+    default: true
+    workspace:
+      host: https://your-host.cloud.databricks.com
+    variables:
+      catalog: workspace
+      schema: dev
+  prod:
+    mode: production
+    workspace:
+      host: https://your-host.cloud.databricks.com
+    variables:
+      catalog: workspace
+      schema: prod
+    permissions:
+      - user_name: ${workspace.current_user.userName}
+        level: CAN_MANAGE

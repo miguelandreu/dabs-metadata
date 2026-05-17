@@ -17,12 +17,17 @@ SCHEMA = "${var.schema}"
 
 
 def _load_config() -> list[dict]:
+    """Load pipeline configuration from JSON file."""
     with open(CONFIG_PATH) as f:
         return json.load(f)
 
 
 def _build_tags(tags: list[dict]) -> dict[str, str]:
-    """Flatten list of tag dicts into a single dict for Databricks job tags."""
+    """
+    Flatten list of tag dicts into a single dict for Databricks job tags.
+    :param tags: (list[dict])
+    :return (dict[str, str])
+    """
     result = {}
     for tag in tags:
         result.update(tag)
@@ -30,6 +35,13 @@ def _build_tags(tags: list[dict]) -> dict[str, str]:
 
 
 def _create_pipeline(pipeline_group: str, tags: dict[str, str]) -> Pipeline:
+    """
+    Create a DLT pipeline resource for the given pipeline group by using
+    databricks bundles.
+    :param pipeline_group: (str)
+    :param tags: (dict)
+    :return (Pipeline)
+    """
     return Pipeline.from_dict({
         "name": f"pipeline_{pipeline_group}_dlt",
         "catalog": CATALOG,
@@ -56,6 +68,13 @@ def _create_pipeline(pipeline_group: str, tags: dict[str, str]) -> Pipeline:
 
 
 def _create_job(pipeline_group: str, tags: dict[str, str]) -> Job:
+    """
+    Create a Databricks Job resource for the given pipeline group that orchestrates
+    the execution of the DLT pipeline and its dependencies.
+    :param pipeline_group: (str)
+    :param tags: (dict)
+    :return (Job)
+    """
     pipeline_ref = f"${{resources.pipelines.pipeline_{pipeline_group}_dlt.id}}"
 
     return Job.from_dict({

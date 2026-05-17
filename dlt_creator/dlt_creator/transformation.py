@@ -13,6 +13,7 @@ def runner(spark):
 
     print(operation_name)
 
+    # Extract metadata for the given operation name and active status
     metadata = (
         spark
         .table("meteo_open_data.operations.metadata")
@@ -20,7 +21,8 @@ def runner(spark):
         .where("is_active == True")
     ).collect()
 
-
+    # Can happend that, all the configuration has been deactivated, or
+    # there is no configuration at all.
     if len(metadata) > 0:
 
         bronze_rows = [r for r in metadata if r.operation_type == "bronze"]
@@ -35,6 +37,8 @@ def runner(spark):
         
         # Execute silver logic
         for r in silver_rows:
+
+            # Extract all paremeters from the silver
             r_dict = r.asDict()
             parameters = json.loads(r_dict.get("parameters"))
 
@@ -61,6 +65,7 @@ def runner(spark):
 
             scd_type = cdc_parameters.get("scd_type", 2)
 
+            # Auto CDC flow for incremental or logical deletion sources.
             if cdc_type == "auto_cdc":
                 print("Executing auto_cdc flow")
 
@@ -77,6 +82,7 @@ def runner(spark):
                     scd_type=scd_type
                 )
 
+            # Auto CDC with snapshot for Physical Deletion or bulk
             elif cdc_type == "auto_cdc_from_snapshot":
                 print("Executing auto_cdc_from_snapshot flow")
                 order_keys = cdc_parameters.get("order_keys", [])
@@ -96,6 +102,7 @@ def runner(spark):
                     cdc_parameters.get("track_history_column_list", [])
                 )
         
+        # Execute Gold Logic
         for r in gold_rows:
             r_dict = r.asDict()
             parameters = json.loads(r_dict.get("parameters"))

@@ -1,4 +1,5 @@
 from pyspark import pipelines as dp
+from pyspark.sql import SparkSession
 
 import json
 import re
@@ -58,6 +59,9 @@ def spark_type(type_str: str, *, default_decimal: tuple[int, int] = (38, 2)) -> 
     Supports common primitive aliases (for example `int`, `integer`, `bool`)
     and decimal definitions in the form `decimal(p,s)`. If `decimal` is
     provided without precision/scale, `default_decimal` is used.
+    :param type_str: (str)
+    :param default_decimal: (tuple[int, int])
+    :return DataType:
     """
     if type_str is None:
         raise ValueError("type_str cannot be None")
@@ -102,6 +106,9 @@ def parse_type(type_obj, *, default_decimal: tuple[int, int] = (38, 2)) -> DataT
     - A string (primitive type)
     - A dict with 'type': 'array' and 'elementType'
     - A dict with 'type': 'struct' and 'fields'
+    :param type_str: (str)
+    :param default_decimal: (tuple[int, int])
+    :return DataType:
     """
     if isinstance(type_obj, str):
         # Primitive type
@@ -165,6 +172,9 @@ def convert_struct_schema_string_to_struct_type(
       }
 
     Returns a PySpark StructType suitable for Auto Loader.
+    :param schema_json: (str)
+    :param default_decimal: (tuple[int, int])
+    :return StructType | None:
     """
     schema_obj = schema_json
     if not schema_obj or schema_obj.get("type") != "struct":
@@ -173,10 +183,13 @@ def convert_struct_schema_string_to_struct_type(
     return parse_type(schema_obj, default_decimal=default_decimal)
 
 
-def create_table(spark, params):
+def create_table(spark: SparkSession, params: dict) -> DataFrame:
     """
     This functionality manages the creation of each of the tables
     in the pipeline.
+    :param spark: (SparkSession)
+    :param params: (dict)
+    :return (DataFrame)
     """
     @dp.table(
         name=params.get("target_table", ""),
@@ -210,6 +223,19 @@ def create_auto_cdc_from_snapshot_flow_local(
     track_history_except_column_list: list[str] = None,
     track_history_column_list: list[str] = None,
 ):
+    """
+    By using declarative pipelines configuration creates the
+    auto_cdc_flow_with_snapshot and delivers a flow build on
+    runtime with the provided parameters.
+    :param spark: (SparkSession)
+    :param target_table: (str)
+    :param source_table: (str)
+    :param business_keys: (list[str])
+    :param order_keys: (list[str])
+    :param scd_type: (int) Default is 2
+    :param track_history_except_column_list: (list[str]) Default is None
+    :param track_history_column_list: (list[str]) Default is None
+    """
     # Step 1: Create target streaming table
     dp.create_streaming_table(name=target_table)
 
@@ -257,6 +283,17 @@ def create_auto_cdc_flow_local(
     sequence_by_col: str,
     scd_type: int = 2
 ):
+    """
+    By using declarative pipelines configuration creates the
+    auto_cdc_flow and delivers a flow build on
+    runtime with the provided parameters.
+    :param spark: (SparkSession)
+    :param source_table: (str)
+    :param target_table: (str)
+    :param keys: (list[str])
+    :param sequence_by_col: (str)
+    :param scd_type: (int) Default is 2
+    """
     # Step 1: Create target streaming table
     dp.create_streaming_table(name=target_table)
 
@@ -287,6 +324,7 @@ def convert_sql_to_python_decorators(sql_content: str) -> str:
     
     Input: SQL with CREATE OR REFRESH MATERIALIZED VIEW statements
     Output: Python code with @dp.materialized_view decorators
+    :param sql_content: (str)
     """
     # Pattern to match CREATE MATERIALIZED VIEW statements
     # Captures: table_name and the SELECT query (handling nested parentheses)

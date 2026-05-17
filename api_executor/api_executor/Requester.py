@@ -65,7 +65,7 @@ class Requester():
                 print(f"Error writing {full_filename}")
 
     
-    def independent_api(self):
+    def independent_api(self) -> None:
         """
         Manage queries when API has no dependencies.
         """
@@ -74,7 +74,7 @@ class Requester():
         self.save_file(response)
 
 
-    def dependent_api(self, dependencies):
+    def dependent_api(self, dependencies: list) -> None:
         """
         Manage queries when API has dependencies
         """
